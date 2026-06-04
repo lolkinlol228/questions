@@ -1,7 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-const rawSupabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const rawSupabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Fallback values are used if the Vercel env vars are missing.
+// These are public by design (the project URL and the Supabase publishable key
+// always ship inside the client bundle), so committing them is safe.
+const FALLBACK_SUPABASE_URL = 'https://xxbbdkiedshmemwptxio.supabase.co';
+const FALLBACK_SUPABASE_ANON_KEY = 'sb_publishable_h3zreN6CLsSYfZOSsRSYzg_jCSaX0bH';
+
+const rawSupabaseUrl = import.meta.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL;
+const rawSupabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || FALLBACK_SUPABASE_ANON_KEY;
 
 function cleanEnv(value) {
   return String(value || '').trim().replace(/^['"]|['"]$/g, '');

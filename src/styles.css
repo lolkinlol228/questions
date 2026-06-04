@@ -100,7 +100,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--primary); box-sh
 .success-card { text-align: center; }
 .error-state .primary { margin-top: 12px; }
 .login-form { display: grid; gap: 14px; }
-.admin-shell { width: min(1500px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 60px; display: grid; gap: 18px; }
+.admin-shell { width: min(1500px, calc(100% - 28px)); max-width: 100%; margin: 0 auto; padding: 24px 0 60px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; overflow-x: clip; }
 .admin-header { padding: 26px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .admin-header h1 { font-size: clamp(28px, 3vw, 44px); margin-bottom: 8px; }
 .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -542,3 +542,15 @@ blockquote { margin: 0; padding: 12px; background: #f7faf7; border-left: 4px sol
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* Layout fix: wide tables (matrix / cohorts / leads) must scroll inside their
+   own card instead of stretching the whole admin layout to the right. */
+.admin-shell > * { min-width: 0; }
+.analytics-grid > *,
+.methodology-grid > *,
+.methodology-two-col > *,
+.kpi-grid > *,
+.quota-grid > *,
+.question-stats-grid > *,
+.cohort-summary > * { min-width: 0; }
+.table-wrap { max-width: 100%; overflow-x: auto; }

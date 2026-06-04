@@ -231,11 +231,12 @@ export const OPTION_SETS = {
     opt('not_plan', 'Не планирую ходить', 'Барууну пландабайм', 'Do not plan to attend')
   ],
   mixed_comfort: [
-    opt('comfortable', 'Комфортно', 'Ыңгайлуу', 'Comfortable'),
+    opt('comfortable', 'Полностью комфортно', 'Толугу менен ыңгайлуу', 'Fully comfortable'),
     opt('rather_comfortable', 'Скорее комфортно', 'Көбүнчө ыңгайлуу', 'Rather comfortable'),
     opt('neutral', 'Нейтрально', 'Нейтралдуу', 'Neutral'),
-    opt('depends_rules', 'Зависит от правил и расписания', 'Эрежелерге жана графикке жараша', 'Depends on rules and schedule'),
-    opt('uncomfortable', 'Некомфортно', 'Ыңгайсыз', 'Uncomfortable')
+    opt('rather_uncomfortable', 'Скорее некомфортно', 'Көбүнчө ыңгайсыз', 'Rather uncomfortable'),
+    opt('uncomfortable', 'Некомфортно', 'Ыңгайсыз', 'Uncomfortable'),
+    opt('depends_rules', 'Зависит от правил и расписания', 'Эрежелерге жана графикке жараша', 'Depends on rules and schedule')
   ],
   local_rules: [
     opt('clear_rules', 'Чёткие правила поведения', 'Так жүрүм-турум эрежелери', 'Clear rules of behavior'),
@@ -314,7 +315,7 @@ export const QUESTIONS = [
   { id: 'jaiu_student_price', section: 'segment_specific', type: 'radio', required: true, options: 'monthly_price', showIf: a => a.segment === 'jaiu_student', title: t('Сколько вы готовы платить за студенческий месячный абонемент?', 'Студенттик айлык абонемент үчүн канча төлөөгө даярсыз?', 'How much are you ready to pay for a student monthly membership?') },
   { id: 'jaiu_attend_with', section: 'segment_specific', type: 'radio', required: true, options: 'attend_with', showIf: a => a.segment === 'jaiu_student', title: t('Вы бы ходили один/одна или с друзьями?', 'Жалгыз барасызбы же досторуңуз мененби?', 'Would you attend alone or with friends?') },
   { id: 'other_student_tariff', section: 'segment_specific', type: 'radio', required: true, options: 'monthly_price', showIf: a => a.segment === 'other_student', title: t('Какой студенческий тариф был бы для вас реальным?', 'Кайсы студенттик тариф сиз үчүн реалдуу?', 'What student tariff would be realistic for you?') },
-  { id: 'local_mixed_audience_comfort', section: 'segment_specific', type: 'radio', required: true, options: 'mixed_comfort', showIf: a => ['local','family_parent','work_nearby','other'].includes(a.segment), title: t('Повлияет ли на ваше решение то, что клубом могут пользоваться иностранные студенты, в том числе студенты из Индии?', 'Клубду чет өлкөлүк студенттер, анын ичинде Индиядан келген студенттер колдонсо, бул чечимиңизге таасир этеби?', 'Would it affect your decision if foreign students, including students from India, also use the club?') },
+  { id: 'local_mixed_audience_comfort', section: 'segment_specific', type: 'radio', required: true, options: 'mixed_comfort', showIf: a => ['local','family_parent','work_nearby','other'].includes(a.segment), title: t('Насколько для вас комфортно, если в клубе будут заниматься и местные жители, и иностранные студенты?', 'Клубда жергиликтүү тургундар жана чет өлкөлүк студенттер чогуу машыкса, сиз үчүн канчалык ыңгайлуу?', 'How comfortable would it be for you if both local residents and international students trained in the same club?') },
   { id: 'local_rules_needed', section: 'segment_specific', type: 'checkbox', required: true, options: 'local_rules', showIf: a => ['local','family_parent','work_nearby','other'].includes(a.segment), title: t('Что сделало бы клуб комфортным для вас и вашей семьи?', 'Клуб сиз жана үй-бүлөңүз үчүн ыңгайлуу болушу үчүн эмне маанилүү?', 'What would make the club comfortable for you and your family?') },
   { id: 'local_separate_hours', section: 'segment_specific', type: 'radio', required: true, options: 'separate_hours', showIf: a => ['local','family_parent','work_nearby','other'].includes(a.segment), title: t('Нужны ли отдельные часы или расписание для разных групп?', 'Ар кандай топтор үчүн өзүнчө убакыт же график керекпи?', 'Are separate hours or schedules needed for different groups?') },
 

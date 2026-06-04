@@ -194,6 +194,7 @@ function renderAdmin() {
     ${renderFilters()}
     ${renderKpis()}
     ${renderDecisionPanel()}
+    ${renderMethodologyAnalysis()}
     ${renderInsightPanel()}
     ${renderPresetAnalytics()}
     ${renderBuilder()}
@@ -265,6 +266,320 @@ function renderDecisionPanel() {
   return `<section class="card"><h2>Проверка готовности к инвестиционному решению</h2><p class="muted">Считается по всей базе. Эти квоты нужны, чтобы не обмануться только интересом студентов или красивыми процентами.</p><div class="quota-grid">${targets.map(([name,value,target]) => progressItem(name, value, target)).join('')}</div></section>`;
 }
 function progressItem(name, value, target) { const p = Math.min(100, Math.round((value / target) * 100)); return `<div class="quota"><div><strong>${escapeHtml(name)}</strong><span>${value}/${target}</span></div><div class="progress"><span style="width:${p}%"></span></div></div>`; }
+
+function renderMethodologyAnalysis() {
+  const a = buildMethodologyAnalysis(allRows);
+  return `<section class="card methodology-card">
+    <div class="methodology-head">
+      <div>
+        <div class="badge">Методология</div>
+        <h2>Автоматический анализ по документу</h2>
+        <p class="muted">Отдельный вывод по всей базе ответов: состав выборки, реальный спрос, цена, барьеры, социальное восприятие рядом с JAIU, waitlist и пресейл.</p>
+      </div>
+      <div class="methodology-scenario ${a.scenario.className}">
+        <span>${escapeHtml(a.scenario.name)}</span>
+        <strong>${escapeHtml(a.scenario.title)}</strong>
+        <small>${escapeHtml(a.scenario.note)}</small>
+      </div>
+    </div>
+
+    <div class="methodology-summary">
+      <p>${a.summary}</p>
+    </div>
+
+    <div class="methodology-grid">
+      ${methodologyMiniPanel('Основной спрос', a.localDemand.title, a.localDemand.note)}
+      ${methodologyMiniPanel('JAIU', a.jaiuDemand.title, a.jaiuDemand.note)}
+      ${methodologyMiniPanel('Цена', a.priceDemand.title, a.priceDemand.note)}
+      ${methodologyMiniPanel('Социальный риск', a.socialRisk.title, a.socialRisk.note)}
+    </div>
+
+    ${methodologyTable('Пороги решения', ['Показатель', 'Факт', 'Порог', 'Вывод'], a.thresholds.map(x => [
+      x.name,
+      x.fact,
+      x.target,
+      methodologyStatus(x.status, x.conclusion)
+    ]))}
+
+    ${methodologyTable('Реальный спрос по сегментам', ['Сегмент', 'Ответы', 'Сильные', 'Тёплые', 'Вывод'], a.segments.map(x => [
+      x.name,
+      `${x.total} (${pct(x.total, a.total)})`,
+      `${x.strong} (${pct(x.strong, x.total)})`,
+      `${x.warm} (${pct(x.warm, x.total)})`,
+      x.conclusion
+    ]))}
+
+    <div class="methodology-two-col">
+      ${methodologyTable('Ценовой коридор', ['Показатель', 'Ответов', 'Доля', 'Вывод'], a.priceRows.map(x => [
+        x.name,
+        x.count,
+        pct(x.count, a.total),
+        x.conclusion
+      ]))}
+      ${methodologyTable('Барьеры', ['Барьер', 'Ответов', 'Доля', 'Что менять'], a.barrierRows.map(x => [
+        x.name,
+        x.count,
+        pct(x.count, a.total),
+        x.action
+      ]))}
+    </div>
+
+    <div class="methodology-two-col">
+      ${methodologyTable('Социальное восприятие', ['Показатель', 'Факт', 'Доля', 'Решение'], a.socialRows.map(x => [
+        x.name,
+        x.count,
+        x.base ? pct(x.count, x.base) : '—',
+        x.action
+      ]))}
+      ${methodologyTable('Waitlist и пресейл', ['Действие', 'Ответов', 'Доля', 'Вывод'], a.actionRows.map(x => [
+        x.name,
+        x.count,
+        pct(x.count, a.total),
+        x.conclusion
+      ]))}
+    </div>
+
+    ${methodologyTable('Итоговые вопросы для решения', ['Вопрос', 'Авто-ответ'], a.finalQuestions.map(x => [x.question, x.answer]))}
+  </section>`;
+}
+
+function buildMethodologyAnalysis(rows) {
+  const total = rows.length;
+  const localRows = rows.filter(r => isLocalSegment(r.segment));
+  const localWomen = localRows.filter(r => r.gender === 'female');
+  const localMen = localRows.filter(r => r.gender === 'male');
+  const jaiu = rows.filter(r => r.segment === 'jaiu_student');
+  const otherStudents = rows.filter(r => r.segment === 'other_student');
+  const workers = rows.filter(r => r.segment === 'work_nearby');
+  const strong = rows.filter(r => r.lead_level === 'strong');
+  const warm = rows.filter(r => r.lead_level === 'warm');
+  const localStrong = strong.filter(r => isLocalSegment(r.segment));
+  const jaiuStrong = strong.filter(r => r.segment === 'jaiu_student');
+  const contacts = rows.filter(r => r.contact);
+  const prepay = rows.filter(r => ['buy1','buy3'].includes(r.pre_opening_action));
+  const price2000 = rows.filter(r => ['2000_2500','2500_3000','3000_plus'].includes(r.affordable_price));
+  const targetPrice = rows.filter(r => ['1500_2000','2000_2500'].includes(r.affordable_price));
+  const lowPrice = rows.filter(r => ['under_1000','1000_1500'].includes(r.affordable_price));
+  const womenZoneImportant = localWomen.filter(r => Number(r.importance_separate_zones || 0) >= 4 || Number(r.importance_privacy || 0) >= 4).length;
+  const mixedAnswered = localRows.filter(r => r.local_mixed_audience_comfort);
+  const mixedComfort = mixedAnswered.filter(r => ['comfortable','rather_comfortable','depends_rules'].includes(r.local_mixed_audience_comfort)).length;
+  const mixedRisk = mixedAnswered.filter(r => ['rather_uncomfortable','uncomfortable'].includes(r.local_mixed_audience_comfort)).length;
+  const separateHours = localRows.filter(r => ['women','students','family'].includes(r.local_separate_hours)).length;
+  const familySignals = rows.filter(r =>
+    hasAnswerValue(r, 'wanted_services', 'child_corner') ||
+    hasAnswerValue(r, 'pay_more_for', 'child_corner') ||
+    hasAnswerValue(r, 'payment_format', 'family') ||
+    hasAnswerValue(r, 'barriers', 'childcare')
+  );
+  const weightedJaiuDemand = Math.round(jaiu.reduce((s, r) => s + demandWeight(r), 0));
+  const weightedLocalDemand = Math.round(localRows.reduce((s, r) => s + demandWeight(r), 0));
+  const womenZonePct = percent(womenZoneImportant, localWomen.length);
+  const mixedComfortPct = percent(mixedComfort, mixedAnswered.length);
+  const price2000Pct = percent(price2000.length, total);
+
+  const greenChecks = [
+    total >= 400,
+    localWomen.length >= 150,
+    jaiu.length >= 100,
+    localStrong.length >= 180,
+    contacts.length >= 100,
+    prepay.length >= 30,
+    womenZonePct >= 60,
+    mixedAnswered.length > 0 && mixedComfortPct >= 60
+  ];
+  const yellowChecks = [
+    total >= 120,
+    localStrong.length >= 60,
+    contacts.length >= 40,
+    prepay.length >= 10,
+    price2000Pct >= 30,
+    womenZonePct >= 50,
+    mixedAnswered.length === 0 || mixedRisk < mixedComfort
+  ];
+  const greenCount = greenChecks.filter(Boolean).length;
+  const yellowCount = yellowChecks.filter(Boolean).length;
+  const scenario = total === 0
+    ? { className: 'empty', name: 'Нет данных', title: 'Опрос ещё не начался', note: 'После первых ответов здесь появится сценарий.' }
+    : greenCount >= 7
+      ? { className: 'green', name: 'Зелёный', title: 'Можно готовить этап 1', note: 'Есть местный спрос, waitlist и признаки пресейла.' }
+      : yellowCount >= 5
+        ? { className: 'yellow', name: 'Жёлтый', title: 'Спрос есть, но нужно добрать доказательства', note: 'Сначала тестировать рекламу, тарифы, расписание и пресейл.' }
+        : { className: 'red', name: 'Красный', title: 'Рано принимать инвестиционное решение', note: 'Не хватает сильных местных лидов, контактов, цены или выборки.' };
+
+  const thresholds = [
+    thresholdCount('Всего анкет', total, 400, 500, 'Нужно 400+ ответов, чтобы не делать вывод по шуму.'),
+    thresholdCount('Местные женщины', localWomen.length, 150, 200, 'Ключевая проверка женской приватной зоны.'),
+    thresholdCount('Местные мужчины', localMen.length, 100, 150, 'Проверка мужской зоны и силового тренинга.'),
+    thresholdCount('Студенты JAIU', jaiu.length, 100, 150, 'JAIU считать плюсом, а не основой экономики.'),
+    thresholdCount('Другие студенты', otherStudents.length, 50, 80, 'Дополнительная студенческая аудитория.'),
+    thresholdCount('Работающие рядом', workers.length, 50, 80, 'Проверка дневной/вечерней загрузки.'),
+    thresholdCount('Сильные лиды среди местных', localStrong.length, 180, 250, 'Главный показатель для инвестора.'),
+    thresholdCount('Сильные лиды среди JAIU', jaiuStrong.length, 50, 100, 'Хорошо, если JAIU даёт дополнительный поток.'),
+    thresholdCount('Контакты в waitlist', contacts.length, 100, 150, 'Контакт сильнее устного интереса.'),
+    thresholdCount('Готовность к предоплате', prepay.length, 30, 50, 'Предоплата подтверждает спрос лучше анкеты.'),
+    thresholdPercent('Женская зона/приватность важны местным женщинам', womenZonePct, 60, 75, 'Если ниже 60%, ценность приватной зоны нужно перепроверить.'),
+    thresholdPercent('Смешанная аудитория комфортна при правилах', mixedComfortPct, 60, 75, 'Если ниже 60%, нужны правила, расписание и аккуратное позиционирование.')
+  ];
+
+  const segments = [
+    segmentDemand('Местные женщины', localWomen),
+    segmentDemand('Местные мужчины', localMen),
+    segmentDemand('JAIU', jaiu),
+    segmentDemand('Другие студенты', otherStudents),
+    segmentDemand('Работающие рядом', workers),
+    segmentDemand('Семейные сигналы', familySignals)
+  ];
+
+  const priceRows = [
+    { name: 'До 1500 сом', count: lowPrice.length, conclusion: lowPrice.length > price2000.length ? 'Средний чек под риском: нужен базовый/дневной тариф.' : 'Не доминирует.' },
+    { name: '1500–2500 сом', count: targetPrice.length, conclusion: 'Основной рабочий коридор для базового тарифа.' },
+    { name: '2000+ сом', count: price2000.length, conclusion: price2000Pct >= 40 ? 'Рабочий тариф 2000+ выглядит реалистично.' : 'Пока осторожно: проверять пакетами и скидками.' },
+    { name: 'Не готов платить ежемесячно', count: rows.filter(r => r.affordable_price === 'not_ready_monthly').length, conclusion: 'Если доля высокая, нужен разовый/8-посещений формат.' }
+  ];
+
+  const barrierRows = [
+    { name: 'Высокая цена', count: countValue(rows, 'barriers', 'price'), action: 'Тестировать дневной, студенческий и 8-посещений тариф.' },
+    { name: 'Далеко', count: countValue(rows, 'barriers', 'far'), action: 'Уточнить транспорт, парковку и рекламу вокруг локации.' },
+    { name: 'Нет времени / неудобный график', count: countValue(rows, 'barriers', ['time','schedule']), action: 'Собрать расписание по топ-времени и отдельным часам.' },
+    { name: 'Нет женской зоны / приватности', count: countValue(rows, 'barriers', ['no_women_zone','privacy']), action: 'Усилить приватность, женский персонал и правила доступа.' },
+    { name: 'Нет доверия / безопасность', count: countValue(rows, 'barriers', 'trust'), action: 'Показать контроль администратора, чистоту, договор и правила.' },
+    { name: 'Языковой барьер', count: countValue(rows, 'barriers', 'language'), action: 'Русский/кыргызский/английский в правилах и коммуникации.' }
+  ];
+
+  const socialRows = [
+    { name: 'Комфортна смешанная аудитория', count: mixedComfort, base: mixedAnswered.length, action: mixedComfortPct >= 60 ? 'Риск управляемый: оставить правила и нейтральную коммуникацию.' : 'Нужна дополнительная проверка и позиционирование.' },
+    { name: 'Некомфортна смешанная аудитория', count: mixedRisk, base: mixedAnswered.length, action: mixedRisk > mixedComfort ? 'Высокий риск: нужны отдельные часы/коммуникация.' : 'Не доминирует.' },
+    { name: 'Нужны отдельные часы', count: separateHours, base: localRows.length, action: separateHours > localRows.length * 0.35 ? 'Заложить расписание до открытия.' : 'Можно оставить как резервную меру.' },
+    { name: 'Правила и контроль администратора', count: countValue(localRows, 'local_rules_needed', ['clear_rules','admin_control']), base: localRows.length, action: 'Включить в правила клуба и маркетинг.' }
+  ];
+
+  const actionRows = [
+    { name: 'Оставили контакт', count: contacts.length, conclusion: contacts.length >= 100 ? 'Waitlist подтверждён.' : 'Нужно добирать waitlist.' },
+    { name: 'Записаться на пробный день', count: rows.filter(r => r.pre_opening_action === 'trial').length, conclusion: 'Хороший сегмент для запуска пробных дней.' },
+    { name: 'Купить 1 месяц со скидкой', count: rows.filter(r => r.pre_opening_action === 'buy1').length, conclusion: 'Прямой сигнал пресейла.' },
+    { name: 'Купить 3 месяца со скидкой', count: rows.filter(r => r.pre_opening_action === 'buy3').length, conclusion: 'Самый сильный сигнал доверия.' },
+    { name: 'Только наблюдать', count: rows.filter(r => r.pre_opening_action === 'watch').length, conclusion: 'Не считать как клиента в финансовой модели.' }
+  ];
+
+  const mainSegment = segments.slice(0, 5).sort((a,b) => b.strong - a.strong || b.total - a.total)[0];
+  const localDemand = localStrong.length >= 180
+    ? panelResult('Подтверждается', `${localStrong.length} сильных местных лидов; взвешенный спрос: ${weightedLocalDemand}.`)
+    : localStrong.length >= 60
+      ? panelResult('Есть сигнал, но ниже порога', `${localStrong.length} сильных местных лидов; нужно добрать местную выборку и контакты.`)
+      : panelResult('Пока не доказан', 'Модель нельзя строить, пока местные сильные лиды ниже методологического порога.');
+  const jaiuDemand = jaiuStrong.length >= 50
+    ? panelResult('Полезный дополнительный сегмент', `${jaiuStrong.length} сильных JAIU-лидов; взвешенный спрос по текущей выборке: ${weightedJaiuDemand}.`)
+    : panelResult('Не считать основой', `${jaiuStrong.length} сильных JAIU-лидов. JAIU пока только дополнительный источник.`);
+  const priceDemand = price2000Pct >= 40
+    ? panelResult('Коридор 2000+ реалистичен', `${price2000.length} ответов (${Math.round(price2000Pct)}%) готовы к 2000+ сом.`)
+    : panelResult('Нужна осторожная тарифная сетка', `2000+ сом выбрали ${price2000.length} (${Math.round(price2000Pct)}%). Нужны пакеты и тест пресейла.`);
+  const socialRisk = mixedAnswered.length === 0
+    ? panelResult('Нет данных', 'Этот блок увидят только местные/работающие рядом/другое.')
+    : mixedComfortPct >= 60
+      ? panelResult('Управляем правилами', `${Math.round(mixedComfortPct)}% местной базы комфортно или зависит от правил.`)
+      : panelResult('Нужно снижать риск', `${mixedRisk} ответов с дискомфортом; проверить отдельные часы и позиционирование.`);
+
+  const finalQuestions = [
+    { question: 'Достаточно ли местного спроса без опоры на JAIU?', answer: localDemand.title + '. ' + localDemand.note },
+    { question: 'Сколько активных клиентов реалистично ожидать от JAIU?', answer: `По текущей выборке: ${jaiuStrong.length} сильных и ${weightedJaiuDemand} взвешенных JAIU-сигналов. Экстраполяцию делать после 100+ JAIU-анкет.` },
+    { question: 'Подтверждён ли ценовой коридор 2000–2500 сом?', answer: priceDemand.title + '. ' + priceDemand.note },
+    { question: 'Подтверждена ли ценность женской зоны и приватности?', answer: womenZonePct >= 60 ? `Да: ${Math.round(womenZonePct)}% местных женщин поставили высокую важность.` : `Пока нет: ${Math.round(womenZonePct)}%, нужно добрать местных женщин.` },
+    { question: 'Есть ли социальный риск из-за смешанной аудитории?', answer: socialRisk.title + '. ' + socialRisk.note },
+    { question: 'Какие изменения нужны до стройки?', answer: topActions(barrierRows, socialRows) },
+    { question: 'Можно ли начинать пресейл?', answer: contacts.length >= 100 && prepay.length >= 30 ? 'Да, есть waitlist и минимум предоплаты.' : 'Пока только мягкий сбор заявок; для пресейла нужны 100+ контактов и 30–50 предоплат.' }
+  ];
+
+  const summary = total
+    ? `Получено <b>${total}</b> анкет. Основной спрос сейчас формирует: <b>${escapeHtml(mainSegment?.name || 'нет данных')}</b>. Сильный потенциальный спрос: <b>${strong.length}</b>, тёплый: <b>${warm.length}</b>. Контакты: <b>${contacts.length}</b>, предоплаты: <b>${prepay.length}</b>. Рекомендация по методологии: <b>${escapeHtml(scenario.title)}</b>.`
+    : 'Ответов пока нет. После первых анкет здесь появится вывод, который можно переносить в презентацию или решение по проекту.';
+
+  return {
+    total,
+    summary,
+    scenario,
+    thresholds,
+    segments,
+    priceRows,
+    barrierRows,
+    socialRows,
+    actionRows,
+    finalQuestions,
+    localDemand,
+    jaiuDemand,
+    priceDemand,
+    socialRisk
+  };
+}
+
+function methodologyMiniPanel(label, title, note) {
+  return `<article class="methodology-panel"><span>${escapeHtml(label)}</span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(note)}</small></article>`;
+}
+
+function methodologyTable(title, headers, rows) {
+  return `<div class="methodology-table-wrap"><h3>${escapeHtml(title)}</h3><div class="table-wrap"><table class="matrix-table methodology-table"><thead><tr>${headers.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+}
+
+function methodologyStatus(status, text) {
+  return `<span class="methodology-pill ${escapeHtml(status)}">${escapeHtml(text)}</span>`;
+}
+
+function thresholdCount(name, value, minimum, strong, note) {
+  const status = value >= strong ? 'strong' : value >= minimum ? 'ok' : value > 0 ? 'warn' : 'bad';
+  const conclusion = value >= strong ? 'Сильный результат' : value >= minimum ? 'Порог выполнен' : value > 0 ? 'Ниже порога' : 'Нет данных';
+  return { name, fact: `${value}`, target: `${minimum}+ / сильный ${strong}+`, status, conclusion: `${conclusion}. ${note}` };
+}
+
+function thresholdPercent(name, value, minimum, strong, note) {
+  const rounded = Math.round(value || 0);
+  const status = value >= strong ? 'strong' : value >= minimum ? 'ok' : value > 0 ? 'warn' : 'bad';
+  const conclusion = value >= strong ? 'Сильный результат' : value >= minimum ? 'Порог выполнен' : value > 0 ? 'Ниже порога' : 'Нет данных';
+  return { name, fact: `${rounded}%`, target: `${minimum}%+ / сильный ${strong}%+`, status, conclusion: `${conclusion}. ${note}` };
+}
+
+function segmentDemand(name, rows) {
+  const strong = rows.filter(r => r.lead_level === 'strong').length;
+  const warm = rows.filter(r => r.lead_level === 'warm').length;
+  const conclusion = strong >= 50 ? 'Сильный сегмент для запуска.' : strong >= 20 ? 'Есть спрос, нужен добор.' : rows.length ? 'Пока слабый сигнал.' : 'Нет данных.';
+  return { name, total: rows.length, strong, warm, conclusion };
+}
+
+function panelResult(title, note) {
+  return { title, note };
+}
+
+function hasAnswerValue(row, id, values) {
+  const list = Array.isArray(values) ? values.map(String) : [String(values)];
+  const value = rawValue(row, id);
+  if (Array.isArray(value)) return value.map(String).some(v => list.includes(v));
+  return list.includes(String(value));
+}
+
+function countValue(rows, id, values) {
+  return rows.filter(row => hasAnswerValue(row, id, values)).length;
+}
+
+function percent(value, total) {
+  return total ? (value / total) * 100 : 0;
+}
+
+function demandWeight(row) {
+  if (['buy1','buy3'].includes(row.pre_opening_action)) return 1;
+  if (row.pre_opening_action === 'trial' && row.contact) return 0.7;
+  if (row.contact) return 0.5;
+  if (['definitely','likely'].includes(row.first_month_probability)) return 0.25;
+  if (row.first_month_probability === 'maybe' || row.concept_interest === 'neutral') return 0.1;
+  return 0;
+}
+
+function topActions(barriers, socialRows) {
+  const topBarrier = [...barriers].sort((a,b) => b.count - a.count)[0];
+  const needsHours = socialRows.find(x => x.name === 'Нужны отдельные часы')?.count || 0;
+  const actions = [];
+  if (topBarrier?.count) actions.push(topBarrier.action);
+  if (needsHours) actions.push('Проверить отдельные часы для женщин/студентов/семей.');
+  actions.push('Собирать waitlist и подтверждать интерес пробным днём/предоплатой.');
+  return actions.join(' ');
+}
 
 function renderInsightPanel() {
   const rows = filteredRows;
@@ -593,6 +908,7 @@ function exportAnalyticsJson() {
       contacts: filteredRows.filter(r => r.contact).length,
       prepay: filteredRows.filter(r => ['buy1','buy3'].includes(r.pre_opening_action)).length
     },
+    methodology: buildMethodologyAnalysis(filteredRows),
     per_question: QUESTIONS.map(q => ({ id: q.id, title: L(q.title, RU), type: q.type, distribution: countBy(filteredRows, q.id, 100) })),
     preset_matrices: {
       age_by_price: makeMatrix(filteredRows, 'age_range', 'affordable_price'),

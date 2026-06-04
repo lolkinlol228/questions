@@ -46,10 +46,9 @@ const opt = (value, ru, kg, en) => ({ value, label: t(ru, kg, en) });
 export const OPTION_SETS = {
   segment: [
     opt('local', 'Местный житель', 'Жергиликтүү тургун', 'Local resident'),
-    opt('family_parent', 'Семья / родитель', 'Үй-бүлө / ата-эне', 'Family / parent'),
-    opt('work_nearby', 'Работаю рядом', 'Жакын жерде иштейм', 'I work nearby'),
     opt('jaiu_student', 'Студент JAIU', 'ЖАЭУ студенти', 'JAIU student'),
     opt('other_student', 'Студент другого учебного заведения', 'Башка окуу жайдын студенти', 'Student of another institution'),
+    opt('work_nearby', 'Работаю рядом', 'Жакын жерде иштейм', 'I work nearby'),
     opt('other', 'Другое', 'Башка', 'Other')
   ],
   age_range: [
@@ -65,12 +64,6 @@ export const OPTION_SETS = {
     opt('female', 'Женский', 'Аял', 'Female'),
     opt('male', 'Мужской', 'Эркек', 'Male'),
     opt('prefer_not', 'Предпочитаю не отвечать', 'Жооп бергим келбейт', 'Prefer not to answer')
-  ],
-  family_status: [
-    opt('no_children', 'Без детей / не актуально', 'Баласыз / тиешеси жок', 'No children / not relevant'),
-    opt('has_children', 'Есть дети', 'Балдарым бар', 'Have children'),
-    opt('parent_needs_child_corner', 'Нужен детский уголок', 'Балдар бурчу керек', 'Need a children’s corner'),
-    opt('family_membership', 'Интересен семейный абонемент', 'Үй-бүлөлүк абонемент кызыктуу', 'Interested in a family membership')
   ],
   understands_location: [
     opt('yes_clear', 'Да, понимаю где это', 'Ооба, кайда экенин түшүнөм', 'Yes, I know where it is'),
@@ -283,7 +276,6 @@ export const QUESTIONS = [
   { id: 'segment', section: 'profile', type: 'radio', required: true, options: 'segment', title: t('Кто вы?', 'Сиз кимсиз?', 'Which group do you belong to?') },
   { id: 'age_range', section: 'profile', type: 'radio', required: true, options: 'age_range', title: t('Ваш возраст?', 'Жашыңыз канча?', 'What is your age?') },
   { id: 'gender', section: 'profile', type: 'radio', required: true, options: 'gender', title: t('Ваш пол?', 'Жынысыңыз?', 'What is your gender?') },
-  { id: 'family_status', section: 'profile', type: 'checkbox', required: false, options: 'family_status', title: t('Что важно знать про семью/детей?', 'Үй-бүлө/балдар боюнча эмне маанилүү?', 'What is important about family/children?') },
 
   { id: 'understands_location', section: 'location', type: 'radio', required: true, options: 'understands_location', title: t('Понимаете ли вы, где находится предполагаемая локация: ул. Курманбек, 24, ориентир — 14 школа и JAIU?', 'Болжолдуу жайгашкан жерди түшүнөсүзбү: Курманбек көчөсү, 24, багыт — 14-мектеп жана ЖАЭУ?', 'Do you understand the proposed location: Kurmanbek Street 24, near School No.14 and JAIU?') },
   { id: 'daytime_location', section: 'location', type: 'radio', required: true, options: 'daytime_location', title: t('Где вы чаще всего находитесь в течение дня?', 'Күндүз көбүнчө кайсы жерде болосуз?', 'Where do you usually spend most of your day?') },

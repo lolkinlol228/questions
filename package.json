@@ -1,0 +1,16 @@
+{
+  "name": "fitness-survey-analytics-v4",
+  "version": "4.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.48.1",
+    "vite": "^6.0.0"
+  },
+  "devDependencies": {}
+}

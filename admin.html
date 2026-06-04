@@ -6,7 +6,13 @@
     <title>Админ-панель: статистика опроса</title>
   </head>
   <body>
-    <div id="adminApp"></div>
+    <div id="adminApp">
+      <main class="boot-fallback">
+        <strong>Загрузка админ-панели...</strong>
+        <span>Если экран не изменится, проверьте консоль браузера.</span>
+      </main>
+    </div>
+    <noscript>Для админ-панели нужен включенный JavaScript.</noscript>
     <script type="module" src="/src/admin.js"></script>
   </body>
 </html>

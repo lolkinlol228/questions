@@ -12,7 +12,9 @@ export const UI = {
     required: 'Ответьте на обязательные вопросы', saved: 'Черновик сохранён', submittedTitle: 'Спасибо, ваши ответы сохранены',
     submittedText: 'С этого устройства анкета уже была отправлена. Повторная отправка заблокирована, чтобы результаты не искажались.',
     restore: 'Мы восстановили незавершённые ответы. Можно продолжить с того места, где вы остановились.',
-    clearDraft: 'Очистить черновик', progress: 'Шаг', optional: 'необязательно', selectMany: 'Можно выбрать несколько вариантов', other: 'Другое', yes: 'Да', no: 'Нет'
+    clearDraft: 'Очистить черновик', progress: 'Шаг', optional: 'необязательно', selectMany: 'Можно выбрать несколько вариантов', other: 'Другое', yes: 'Да', no: 'Нет',
+    timeNote: '3–5 минут', locationShort: 'Курманбек 24', anonymousShort: 'Анонимно', mobileNote: 'Удобно проходить с телефона: крупные варианты, автосохранение и короткие шаги.',
+    answered: 'Отвечено', from: 'из', loadingError: 'Не удалось запустить анкету', reload: 'Обновить страницу'
   },
   kg: {
     title: 'Манас шаарындагы фитнес-клуб боюнча сурамжылоо',
@@ -21,7 +23,9 @@ export const UI = {
     required: 'Милдеттүү суроолорго жооп бериңиз', saved: 'Черновик сакталды', submittedTitle: 'Рахмат, жоопторуңуз сакталды',
     submittedText: 'Бул түзмөктөн анкета буга чейин жөнөтүлгөн. Натыйжалар бузулбашы үчүн кайра жөнөтүү бөгөттөлгөн.',
     restore: 'Бүтө элек жоопторуңуз калыбына келтирилди. Токтогон жериңизден уланта аласыз.',
-    clearDraft: 'Черновикти тазалоо', progress: 'Кадам', optional: 'милдеттүү эмес', selectMany: 'Бир нече вариантты тандасаңыз болот', other: 'Башка', yes: 'Ооба', no: 'Жок'
+    clearDraft: 'Черновикти тазалоо', progress: 'Кадам', optional: 'милдеттүү эмес', selectMany: 'Бир нече вариантты тандасаңыз болот', other: 'Башка', yes: 'Ооба', no: 'Жок',
+    timeNote: '3–5 мүнөт', locationShort: 'Курманбек 24', anonymousShort: 'Анонимдүү', mobileNote: 'Телефондон өтүүгө ыңгайлуу: чоң варианттар, авто-сактоо жана кыска кадамдар.',
+    answered: 'Жооп берилди', from: 'ичинен', loadingError: 'Анкетаны иштетүү мүмкүн болгон жок', reload: 'Баракты жаңыртуу'
   },
   en: {
     title: 'Survey about a fitness club in Manas city',
@@ -30,7 +34,9 @@ export const UI = {
     required: 'Please answer all required questions', saved: 'Draft saved', submittedTitle: 'Thank you, your answers have been saved',
     submittedText: 'This device has already submitted the survey. A second submission is blocked to keep the results clean.',
     restore: 'Your unfinished answers were restored. You can continue where you stopped.',
-    clearDraft: 'Clear draft', progress: 'Step', optional: 'optional', selectMany: 'You can select multiple options', other: 'Other', yes: 'Yes', no: 'No'
+    clearDraft: 'Clear draft', progress: 'Step', optional: 'optional', selectMany: 'You can select multiple options', other: 'Other', yes: 'Yes', no: 'No',
+    timeNote: '3–5 minutes', locationShort: 'Kurmanbek 24', anonymousShort: 'Anonymous', mobileNote: 'Built for phones: large choices, autosave and short steps.',
+    answered: 'Answered', from: 'of', loadingError: 'Could not start the survey', reload: 'Reload page'
   }
 };
 

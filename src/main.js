@@ -87,7 +87,22 @@ function getCurrentSection() {
   return sections[state.step];
 }
 
+function hasAnswer(q) {
+  const value = state.answers[q.id];
+  if (q.type === 'checkbox') return Array.isArray(value) && value.length > 0;
+  if (q.type === 'scale') return Number(value) > 0;
+  return value !== undefined && value !== null && String(value).trim() !== '';
+}
+
 function render() {
+  try {
+    renderApp();
+  } catch (error) {
+    renderAppError(error);
+  }
+}
+
+function renderApp() {
   document.documentElement.lang = state.lang;
   if (localStorage.getItem(SUBMITTED_KEY) === 'true') {
     renderSubmitted();
@@ -95,6 +110,22 @@ function render() {
   }
   if (state.step < 0) renderWelcome();
   else renderSurvey();
+}
+
+function renderAppError(error) {
+  console.error(error);
+  if (!app) return;
+  app.innerHTML = `
+    <main class="page-shell single-card">
+      <section class="card success-card error-state">
+        <div class="badge">Error</div>
+        <h1>${text('loadingError')}</h1>
+        <p>${escapeHtml(error?.message || 'Unknown error')}</p>
+        <button class="primary" id="reloadBtn">${text('reload')}</button>
+      </section>
+    </main>
+  `;
+  app.querySelector('#reloadBtn')?.addEventListener('click', () => window.location.reload());
 }
 
 function renderSubmitted() {
@@ -113,9 +144,17 @@ function renderWelcome() {
   app.innerHTML = `
     <main class="page-shell landing">
       <section class="hero card">
-        <div class="badge">Survey</div>
+        <div class="hero-topline">
+          <div class="badge">Survey</div>
+          <span>${text('timeNote')}</span>
+        </div>
         <h1>${text('title')}</h1>
-        <p>${text('subtitle')}</p>
+        <p class="hero-copy">${text('subtitle')}</p>
+        <div class="hero-points" aria-label="Survey details">
+          <span>${text('locationShort')}</span>
+          <span>${text('anonymousShort')}</span>
+          <span>${text('timeNote')}</span>
+        </div>
         <div class="lang-grid" role="group" aria-label="${text('chooseLang')}">
           ${Object.entries(LANGS).map(([code, name]) => `
             <button class="lang-btn ${state.lang === code ? 'active' : ''}" data-lang="${code}">${name}</button>
@@ -123,7 +162,7 @@ function renderWelcome() {
         </div>
         ${state.restored ? `<div class="notice">${text('restore')}</div>` : ''}
         <div class="actions">
-          <button class="primary" id="startBtn">${text('start')}</button>
+          <button class="primary hero-start" id="startBtn">${text('start')}</button>
           ${state.restored ? `<button class="ghost" id="clearDraftBtn">${text('clearDraft')}</button>` : ''}
         </div>
       </section>
@@ -157,11 +196,25 @@ function renderSurvey() {
   const sections = getSections();
   const questions = questionsForSection(section.id, state.answers);
   const percent = Math.round(((state.step + 1) / sections.length) * 100);
+  const answered = questions.filter(hasAnswer).length;
+  const sectionTitle = L(section.title, state.lang);
   app.innerHTML = `
     <main class="page-shell survey-layout">
+      <div class="mobile-survey-top">
+        <div class="mobile-progress-meta">
+          <span>${text('progress')} ${state.step + 1}/${sections.length}</span>
+          <strong>${percent}%</strong>
+        </div>
+        <div class="progress"><span style="width:${percent}%"></span></div>
+        <div class="mobile-section-title">${sectionTitle}</div>
+      </div>
       <aside class="sidebar card">
         <div class="mini-title">${text('progress')} ${state.step + 1}/${sections.length}</div>
         <div class="progress"><span style="width:${percent}%"></span></div>
+        <div class="sidebar-stat">
+          <span>${text('answered')}</span>
+          <b>${answered}/${questions.length}</b>
+        </div>
         <ol class="steps">
           ${sections.map((s, i) => `<li class="${i === state.step ? 'active' : ''} ${i < state.step ? 'done' : ''}">${L(s.title, state.lang)}</li>`).join('')}
         </ol>
@@ -170,8 +223,8 @@ function renderSurvey() {
       <section class="card form-card">
         <div class="form-head">
           <div class="badge">${state.step + 1}/${sections.length}</div>
-          <h1>${L(section.title, state.lang)}</h1>
-          <p>${text('saved')}</p>
+          <h1>${sectionTitle}</h1>
+          <p>${text('answered')} ${answered} ${text('from')} ${questions.length}. ${text('saved')}</p>
         </div>
         <form id="surveyForm" novalidate>
           <div id="questionsMount">
@@ -211,14 +264,16 @@ function renderQuestion(q) {
     body = `<div class="option-grid">${getOptionSet(q.options).map(o => `
       <label class="option ${value === o.value ? 'checked' : ''}">
         <input type="radio" name="${q.id}" value="${o.value}" ${value === o.value ? 'checked' : ''}>
-        <span>${L(o.label, state.lang)}</span>
+        <span class="option-marker" aria-hidden="true"></span>
+        <span class="option-label">${L(o.label, state.lang)}</span>
       </label>`).join('')}</div>`;
   } else if (q.type === 'checkbox') {
     const arr = Array.isArray(value) ? value : [];
     body = `<div class="option-grid">${getOptionSet(q.options).map(o => `
       <label class="option ${arr.includes(o.value) ? 'checked' : ''}">
         <input type="checkbox" name="${q.id}" value="${o.value}" ${arr.includes(o.value) ? 'checked' : ''}>
-        <span>${L(o.label, state.lang)}</span>
+        <span class="option-marker" aria-hidden="true"></span>
+        <span class="option-label">${L(o.label, state.lang)}</span>
       </label>`).join('')}</div>`;
   } else if (q.type === 'scale') {
     body = `<div class="scale-row">${[1,2,3,4,5].map(n => `
@@ -229,10 +284,10 @@ function renderQuestion(q) {
   } else if (q.type === 'textarea') {
     body = `<textarea name="${q.id}" rows="4" placeholder="...">${value || ''}</textarea>`;
   } else {
-    body = `<input type="text" name="${q.id}" value="${escapeHtml(value || '')}" placeholder="...">`;
+    body = `<input type="text" name="${q.id}" value="${escapeHtml(value || '')}" placeholder="..." autocomplete="off">`;
   }
   return `
-    <fieldset class="question" data-question="${q.id}">
+    <fieldset class="question ${hasAnswer(q) ? 'answered' : ''}" data-question="${q.id}" data-type="${q.type}">
       <legend>${L(q.title, state.lang)} ${required}</legend>
       ${hint}
       ${body}
@@ -301,6 +356,7 @@ async function onSubmitStep(event) {
     errorBox.hidden = false;
     errorBox.textContent = text('required');
     missing.forEach(id => app.querySelector(`[data-question="${id}"]`)?.classList.add('missing'));
+    app.querySelector(`[data-question="${missing[0]}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
   const sections = getSections();

@@ -367,7 +367,7 @@ function makeCohorts(rows, dims, minSize = 1) {
     const valueLists = cleanDims.map(id => {
       const v = rawValue(row, id);
       if (Array.isArray(v)) return v.length ? v.map(String) : [blank];
-      return [String(v ?? blank || blank)];
+      return [String((v ?? blank) || blank)];
     });
     const combos = cartesian(valueLists).slice(0, 200);
     combos.forEach(values => {
@@ -400,14 +400,14 @@ function makeCohorts(rows, dims, minSize = 1) {
       prepay_pct: total ? prepay / total * 100 : 0,
       price2000_pct: total ? price2000 / total * 100 : 0,
       location_ok_pct: total ? locationOk / total * 100 : 0,
-      topService: topValue(c.rows, 'wanted_services'),
-      topBarrier: topValue(c.rows, 'barriers'),
-      topTime: topValue(c.rows, 'preferred_time')
+      topService: topNonBlankValue(c.rows, 'wanted_services'),
+      topBarrier: topNonBlankValue(c.rows, 'barriers'),
+      topTime: topNonBlankValue(c.rows, 'preferred_time')
     };
   });
 }
 function cartesian(arrays) { return arrays.reduce((acc, arr) => acc.flatMap(a => arr.map(v => [...a, v])), [[]]); }
-function topValue(rows, id) {
+function topNonBlankValue(rows, id) {
   const counts = countBy(rows, id, 25).filter(x => x.value !== blank);
   counts.sort((a,b) => b.count - a.count);
   return counts[0] || null;
